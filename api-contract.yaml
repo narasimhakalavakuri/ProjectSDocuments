@@ -1,0 +1,240 @@
+
+openapi: 3.0.3
+info:
+  title: Identity and Access Management API
+  description: |
+    API contract for User Onboarding and OAuth 2.0 Token Management.
+    This specification covers the creation of user accounts and the full lifecycle of access/refresh tokens.
+  version: 1.0.0
+  contact:
+    name: API Development Team
+    email: dev-support@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+tags:
+  - name: User Management
+    description: Operations related to user account lifecycle.
+  - name: Authentication & OAuth
+    description: Operations for issuing, refreshing, and revoking tokens.
+
+paths:
+  /users/register:
+    post:
+      tags:
+        - User Management
+      summary: Create a new user account
+      description: Registers a new user in the system with an email and password.
+      operationId: registerUser
+      requestBody:
+        description: User registration details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: User with this email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication & OAuth
+      summary: Authenticate user and issue tokens
+      description: Exchanges user credentials for an access token and a refresh token.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication & OAuth
+      summary: Refresh an expired access token
+      description: Uses a valid refresh token to obtain a new access token and a new refresh token (rotation).
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: Tokens rotated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication & OAuth
+      summary: Revoke tokens
+      description: Invalidate the provided refresh token to end the session.
+      operationId: logout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '204':
+          description: Successfully logged out
+        '401':
+          description: Token invalid or already revoked
+
+components:
+  schemas:
+    UserRegistrationRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          description: Must contain at least one uppercase, one lowercase, one number, and one special character.
+          example: "SecureP@ss123"
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        email:
+          type: string
+          format: email
+          example: john.doe@example.com
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        createdAt:
+          type: string
+          format: date-time
+          example: "2023-10-27T10:00:00Z"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+
+    RefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: The refresh token issued during the last authentication or refresh cycle.
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          description: JWT access token for API authorization.
+        refresh_token:
+          type: string
+          description: Token used to obtain new access tokens.
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Lifetime of the access token in seconds.
+          example: 3600
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "The email address provided is already in use."
+        details:
+          type: array
+          items:
+            type: string
+          description: Optional list of specific validation failures.
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
