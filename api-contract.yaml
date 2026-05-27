@@ -6,6 +6,9 @@ info:
     API contract for User Onboarding and OAuth 2.0 Token Management.
     This specification covers the creation of user accounts and the full lifecycle of access/refresh tokens.
   version: 1.0.0
+  license: 
+    name: MIT
+    
   contact:
     name: API Development Team
     email: dev-support@example.com
