@@ -160,10 +160,55 @@ paths:
         '401':
           description: Forbidden
 
+  /users/profile:
+    get:
+      tags:
+        - User Management
+      summary: Get the current user's profile
+      operationId: getProfile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - User Management
+      summary: Update profile details
+      operationId: updateProfile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid input data
+
 components:
 
   schemas:  
-    
+      
     UserRegistrationRequest:
       type: object
       required:
@@ -278,21 +323,24 @@ components:
       required: 
         - email
         - firstName
+    
+    UpdateProfileRequest:
+      type: object
+      required:
+        - firstName
+        - lastName
+      properties:
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
 
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-    
-    OAuth2Auth:
-      type: oauth2
-      flows: 
-        authorizationCode: 
-          authorizationUrl: "https://www.bablu.dev/oauth2/authorize"
-          tokenUrl: "https://www.bablu.dev/oauth2/tokens"
-          scopes:
-            read:users: "Read All Users Data"
-
-
-
+  
+  

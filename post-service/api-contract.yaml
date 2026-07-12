@@ -1,0 +1,136 @@
+openapi: 3.0.3
+info:
+  title: Post Service API
+  description: API for managing user posts, including creation, retrieval, and status tracking.
+  version: 1.0.0
+servers:
+  - url: https://api.myapp.com/v1
+    description: Production API Server
+
+paths:
+  /posts:
+    post:
+      summary: Create a new post
+      tags: [Posts]
+      parameters:
+        - name: X-User-Id
+          in: header
+          required: true
+          description: User ID provided by the Auth Service context.
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Post successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: List posts with pagination
+      tags: [Posts]
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Paginated list of posts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostPage'
+
+  /posts/{postId}:
+    get:
+      summary: Get a specific post by ID
+      tags: [Posts]
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Post found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    CreatePostRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 1000
+          description: The main body text of the post.
+          
+    Post:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        userId: {type: string, format: uuid}
+        content: {type: string}
+        createdAt: {type: string, format: date-time}
+        updatedAt: {type: string, format: date-time}
+
+    PostPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        totalElements: {type: integer}
+        totalPages: {type: integer}
+
+  responses:
+    BadRequest:
+      description: Invalid input parameters
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+    Unauthorized:
+      description: Missing or invalid authentication token
+    NotFound:
+      description: The requested resource does not exist
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp: {type: string, format: date-time}
+        status: {type: integer}
+        error: {type: string}
+        message: {type: string}
+        path: {type: string}

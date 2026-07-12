@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PostCreatedEvent",
+  "type": "object",
+  "properties": {
+    "event_id": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "data": {
+      "type": "object",
+      "properties": {
+        "post_id": { "type": "string", "format": "uuid" },
+        "author_id": { "type": "string", "format": "uuid" },
+        "content_preview": { "type": "string", "maxLength": 100 }
+      },
+      "required": ["post_id", "author_id", "content_preview"]
+    }
+  },
+  "required": ["event_id", "timestamp", "data"]
+}
